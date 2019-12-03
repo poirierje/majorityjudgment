@@ -7,11 +7,20 @@ import java.util.Random;
 
 public class MajorityJudgment {
 
+	// ALGORITHM
+	static final String BASIC = "basic_algo";
+	static final String FULL  = "full_algo";
+	
+//	static final String ALGO  = BASIC;
+	static final String ALGO  = FULL;
 	
 	
 	// STATICS
 	
-//	static final int      NB_PROJECTS         =      6;
+//	static final int      NB_PROJECTS         =      5;
+//	static final int      NB_VOTERS           =      3;
+
+//	static final int      NB_PROJECTS         =      5;
 //	static final int      NB_VOTERS           =     10;
 
 //	static final int      NB_PROJECTS         =     10;
@@ -29,18 +38,23 @@ public class MajorityJudgment {
 //	static final int      NB_PROJECTS         =    600;
 //	static final int      NB_VOTERS           =  10000;
 
-	static final int      NB_PROJECTS         =    650;
-	static final int      NB_VOTERS           =  40000;
+//	static final int      NB_PROJECTS         =    650;
+//	static final int      NB_VOTERS           =  40000;
 
+//	static final int      NB_PROJECTS         =     65;
+//	static final int      NB_VOTERS           =   4000;
+
+	static final int      NB_PROJECTS         =     10;
+	static final int      NB_VOTERS           =   5000;
 	
 	
 	
 	static final int      NB_JUDGMENTS        =      7; // nb of values for judging
-	static final int      NB_BALLOTS_BY_VOTER =      3; // nb of ballots deposed by each voter (1 ballot = 1 project judgment) 
+	static final int      NB_BALLOTS_BY_VOTER =      5; // nb of ballots deposed by each voter (1 ballot = 1 project judgment) 
 
 	static final Random   RND                 = new Random( System.currentTimeMillis() );
 	
-	static final String   HTML_FILENAME       = "C:\\Users\\Jog\\Desktop\\majority_judment_results.html";
+	static final String   HTML_FILENAME       = "C:\\TEMP\\majority_judment_results.html";
 	
 	static final String[] RGB                 = new String[NB_JUDGMENTS];
 
@@ -75,7 +89,7 @@ public class MajorityJudgment {
 	{
 		// Create projects
 		for (int i = 0; i < NB_PROJECTS; i++) {
-			votes.add( new ProjectJudgment( i, RND.nextDouble(), NB_PROJECTS, NB_JUDGMENTS ));
+			votes.add( new ProjectJudgment( i, RND.nextDouble(), NB_PROJECTS, NB_JUDGMENTS, NB_VOTERS ));
 		}
 		
 		// --------------------------------------------------------------------------------------------------- Simulate votes - Exactly NB_BALLOTS_BY_VOTER
@@ -102,10 +116,32 @@ public class MajorityJudgment {
 				
 //				System.out.println( "#" + i + " voted " + (int) Math.round(centroid) + " for " + votedProject );
 			}
+			System.out.println( "#" + i + " judgment done !" );
+		}
+
+		// On tronque un maximum de zéros (du nombre de zéros du projet ayant le moins de zéros)
+		int nbZerosToDelete = votes.get(0).judgmentsAsNumbersWith0[0];
+		for (ProjectJudgment project : votes) {
+			if ( project.judgmentsAsNumbersWith0[0] < nbZerosToDelete )
+				nbZerosToDelete = project.judgmentsAsNumbersWith0[0];
+		}
+
+		nbZerosToDelete = 0; // *** Comment this line to activate the suppress of '0' ***
+		
+		for (ProjectJudgment project : votes) {
+			project.judgmentsAsNumbersWith0[0] = project.judgmentsAsNumbersWith0[0] - nbZerosToDelete;
+		}
+
+		// Updating projects
+		for (ProjectJudgment project : votes) {
+			project.update( nbZerosToDelete );
 		}
 
 		// Sort projects
-		votes.sort( new SortByMajorityJudgment() );
+		if ( ALGO == BASIC )
+			votes.sort( new SortByMajorityJudgment_FROM_BD() );
+		else 
+			votes.sort( new SortByMajorityJudgment_FROM_FULL_ARTICLE() );
 		
 		// Final display
 //		System.out.println( toString() );
@@ -162,8 +198,13 @@ public class MajorityJudgment {
 			str = str + "<div style='width:100%; display: flex; flex-direction: column;'>";
 			str = str + 	"<div style='display: flex; border-bottom: 1px solid white; color: white'>";
 			for (int i = 0; i < NB_JUDGMENTS; i++) {
-				str = str + "<div style='display: flex; justify-content: center; align-items: center; position: relative; background-color: " + RGB[i] + "; width :" + ( 100 * project.judgmentsAsPercents[i] ) + "%; border-right :1px solid white; '>";
-				str = str + "<span >" + ( first ? project.name + "&nbsp;" : "" )+ "</span><span style='z-index: 1; padding: 2px; background-color: rgba(0,0,0,0.3);'>" + (Math.round(project.judgmentsAsPercents[i] * 10000.0) / 10000.0)  + "</span>";
+				if ( ALGO == BASIC ) {
+					str = str + "<div style='display: flex; justify-content: center; align-items: center; position: relative; background-color: " + RGB[i] + "; width :" + ( 100 * project.judgmentsAsPercents[i] ) + "%; border-right :1px solid white; '>&nbsp;";
+//					str = str + "<span >" + ( first ? project.name + "&nbsp;" : "" )+ "</span><span style='z-index: 1; padding: 2px; background-color: rgba(0,0,0,0.3);'>" + (Math.round(project.judgmentsAsPercents[i] * 100.0) / 100.0)  + "%</span>";
+				} else {
+					str = str + "<div style='display: flex; justify-content: center; align-items: center; position: relative; background-color: " + RGB[i] + "; width :" + ( 100 * project.judgmentsAsPercentsWith0[i] ) + "%; border-right :1px solid white; '>&nbsp;";
+//					str = str + "<span >" + ( first ? project.name + "&nbsp;" : "" )+ "</span><span style='z-index: 1; padding: 2px; background-color: rgba(0,0,0,0.3);'>" + (Math.round(project.judgmentsAsPercentsWith0[i] * 100.0) / 100.0)  + "%</span>";
+				}
 				str = str + "</div>";
 				first = false;
 			}
@@ -173,6 +214,10 @@ public class MajorityJudgment {
 		}
 		str = str + 	"<div style='position: absolute; top: 0; left: 0; height: 100%; width: 50%; border-right: 1px solid black;'>&nbsp;</div>";
 		str = str + "</div>";
+
+		for (ProjectJudgment project : votes) {
+			str = str + "<div>" + project.name + " (" + project.totalRealJudgments + " votes) --> " + project.majorityValue + "</div>";
+		}
 
 		str = str + "</body>";
 

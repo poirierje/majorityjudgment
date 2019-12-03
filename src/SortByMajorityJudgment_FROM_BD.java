@@ -1,16 +1,16 @@
 import java.util.Comparator;
 import java.util.Random;
 
-public class SortByMajorityJudgment implements Comparator<ProjectJudgment> {
+public class SortByMajorityJudgment_FROM_BD implements Comparator<ProjectJudgment> {
 
 	static final Random RND = new Random( System.currentTimeMillis() );
 
 	public int compare(ProjectJudgment p1, ProjectJudgment p2) {
 		
 		// Cas où au moins un des deux candidats n'a reçu aucun jugement
-		if ( p1.totalJudgments + p2.totalJudgments == 0 ) return 0;
-		if ( p1.totalJudgments                     == 0 ) return -1;
-		if (                     p2.totalJudgments == 0 ) return 1;
+		if ( p1.totalRealJudgments + p2.totalRealJudgments == 0 ) return 0;
+		if ( p1.totalRealJudgments                     == 0 ) return -1;
+		if (                     p2.totalRealJudgments == 0 ) return 1;
 		
 		if ( p1.medianPointJudgment == p2.medianPointJudgment )
 		{
