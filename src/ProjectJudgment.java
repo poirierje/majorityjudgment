@@ -120,7 +120,8 @@ public class ProjectJudgment {
 		pcLessTh = 0.0;
 		
 		for (int i = 0; i < nbJudgments; i++) {
-			cumulatedPercents = cumulatedPercents + judgmentsAsPercents[i];
+			cumulatedPercents = cumulatedPercents + judgmentsAsPercentsWith0[i];
+			
 			if ( cumulatedPercents > 0.5) {
 				medianPointJudgment = i;
 				pcMoreTh = 1 - cumulatedPercents;
@@ -128,6 +129,8 @@ public class ProjectJudgment {
 			} else {
 				pcLessTh = cumulatedPercents;
 			}
+
+			
 		}
 	}
 	

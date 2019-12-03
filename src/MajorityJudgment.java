@@ -8,50 +8,28 @@ import java.util.Random;
 public class MajorityJudgment {
 
 	// ALGORITHM
-	static final String BASIC = "basic_algo";
-	static final String FULL  = "full_algo";
+	static final String BD_BASIC            = "basic_algo";
+	static final String BD_BASIC_EGAL_PERSO = "basic_with_egality_algo";
+	static final String FULL                = "full_algo";
 	
-//	static final String ALGO  = BASIC;
-	static final String ALGO  = FULL;
-	
-	
-	// STATICS
-	
-//	static final int      NB_PROJECTS         =      5;
-//	static final int      NB_VOTERS           =      3;
 
-//	static final int      NB_PROJECTS         =      5;
-//	static final int      NB_VOTERS           =     10;
 
-//	static final int      NB_PROJECTS         =     10;
-//	static final int      NB_VOTERS           =    100;
-
-//	static final int      NB_PROJECTS         =     10;
-//	static final int      NB_VOTERS           =   1000;
-
-//	static final int      NB_PROJECTS         =     10;
-//	static final int      NB_VOTERS           = 100000;
-
-//	static final int      NB_PROJECTS         =    600;
-//	static final int      NB_VOTERS           =   1000;
-
-//	static final int      NB_PROJECTS         =    600;
-//	static final int      NB_VOTERS           =  10000;
-
-//	static final int      NB_PROJECTS         =    650;
-//	static final int      NB_VOTERS           =  40000;
-
-//	static final int      NB_PROJECTS         =     65;
-//	static final int      NB_VOTERS           =   4000;
-
-	static final int      NB_PROJECTS         =     10;
-	static final int      NB_VOTERS           =   5000;
 	
 	
+	static final String ALGO  = BD_BASIC;      static final boolean ARASE_0 = false;
+//	static final String ALGO  = BD_BASIC_EGAL; static final boolean ARASE_0 = false;
+//	static final String ALGO  = FULL;          static final boolean ARASE_0 = true;
+	
+	static final int      NB_PROJECTS         =     40;
+	static final int      NB_VOTERS           =  20000;
 	
 	static final int      NB_JUDGMENTS        =      7; // nb of values for judging
-	static final int      NB_BALLOTS_BY_VOTER =      5; // nb of ballots deposed by each voter (1 ballot = 1 project judgment) 
+	static final int      NB_BALLOTS_BY_VOTER =     10; // nb of ballots deposed by each voter (1 ballot = 1 project judgment) 
 
+	
+	
+	
+	
 	static final Random   RND                 = new Random( System.currentTimeMillis() );
 	
 	static final String   HTML_FILENAME       = "C:\\TEMP\\majority_judment_results.html";
@@ -126,7 +104,8 @@ public class MajorityJudgment {
 				nbZerosToDelete = project.judgmentsAsNumbersWith0[0];
 		}
 
-		nbZerosToDelete = 0; // *** Comment this line to activate the suppress of '0' ***
+		if ( !ARASE_0 )
+			nbZerosToDelete = 0;
 		
 		for (ProjectJudgment project : votes) {
 			project.judgmentsAsNumbersWith0[0] = project.judgmentsAsNumbersWith0[0] - nbZerosToDelete;
@@ -138,9 +117,11 @@ public class MajorityJudgment {
 		}
 
 		// Sort projects
-		if ( ALGO == BASIC )
+		if ( ALGO == BD_BASIC )
 			votes.sort( new SortByMajorityJudgment_FROM_BD() );
-		else 
+		else if ( ALGO == BD_BASIC_EGAL_PERSO )
+			votes.sort( new SortByMajorityJudgment_FROM_BD_WITH_EGALITY_HANDLE() );
+		else
 			votes.sort( new SortByMajorityJudgment_FROM_FULL_ARTICLE() );
 		
 		// Final display
@@ -192,18 +173,18 @@ public class MajorityJudgment {
 		// Generate HTML code
 		String str = "<body>";
 
-		str = str + "<div style='width=100%; position: relative; font-family: arial; font-size: 14px'>";
+		str = str + "<div style='width=100%; position: relative; font-family: arial; font-size: 12px'>";
 		for (ProjectJudgment project : votes) {
 			boolean first = true;
 			str = str + "<div style='width:100%; display: flex; flex-direction: column;'>";
 			str = str + 	"<div style='display: flex; border-bottom: 1px solid white; color: white'>";
 			for (int i = 0; i < NB_JUDGMENTS; i++) {
-				if ( ALGO == BASIC ) {
+				if ( false ) {
 					str = str + "<div style='display: flex; justify-content: center; align-items: center; position: relative; background-color: " + RGB[i] + "; width :" + ( 100 * project.judgmentsAsPercents[i] ) + "%; border-right :1px solid white; '>&nbsp;";
-//					str = str + "<span >" + ( first ? project.name + "&nbsp;" : "" )+ "</span><span style='z-index: 1; padding: 2px; background-color: rgba(0,0,0,0.3);'>" + (Math.round(project.judgmentsAsPercents[i] * 100.0) / 100.0)  + "%</span>";
+//					str = str + "<span >" + ( first ? project.name + "&nbsp;" : "" )+ "</span><span style='margin:3px; z-index: 1; padding: 2px; background-color: rgba(0,0,0,0.2);'>" + (Math.round(project.judgmentsAsPercents[i] * 100.0) / 100.0)  + "%</span>";
 				} else {
 					str = str + "<div style='display: flex; justify-content: center; align-items: center; position: relative; background-color: " + RGB[i] + "; width :" + ( 100 * project.judgmentsAsPercentsWith0[i] ) + "%; border-right :1px solid white; '>&nbsp;";
-//					str = str + "<span >" + ( first ? project.name + "&nbsp;" : "" )+ "</span><span style='z-index: 1; padding: 2px; background-color: rgba(0,0,0,0.3);'>" + (Math.round(project.judgmentsAsPercentsWith0[i] * 100.0) / 100.0)  + "%</span>";
+//					str = str + "<span >" + ( first ? project.name + "&nbsp;" : "" )+ "</span><span style='padding:1px; z-index: 1; padding: 2px; background-color: rgba(0,0,0,0.2);'>" + (Math.round(project.judgmentsAsPercentsWith0[i] * 100.0) / 100.0)  + "%</span>";
 				}
 				str = str + "</div>";
 				first = false;
