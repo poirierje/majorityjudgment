@@ -1,3 +1,4 @@
+package v2;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -13,10 +14,8 @@ public class ProjectJudgment {
 	private int           nbProjects;
 	private int           nbJudgments;
 	private int           nbVoters;
+	private int           nbBallots;
 	
-	public  Integer[]     judgmentsAsNumbers;  // = How many real judgments by judgment value
-	public  Double []     judgmentsAsPercents; // = How many real judgments by judgment value as percents
-
 	public  Integer[]     judgmentsAsNumbersWith0;  // = How many real judgments by judgment value with added 0 for every abstention
 	public  Double []     judgmentsAsPercentsWith0; // = How many real judgments by judgment value as percents with added 0 for every abstention
 
@@ -33,7 +32,7 @@ public class ProjectJudgment {
 	// * CONSTRUCTOR CONSTRUCTOR CONSTRUCTOR CONSTRUCTOR CONSTRUCTOR CONSTRUCTOR CONSTRUCTOR CONST *
 	// *********************************************************************************************
 	
-	public ProjectJudgment(int num, double lovely, int nbProjects, int nbJudgments, int nbVoters) {
+	public ProjectJudgment(int num, double lovely, int nbProjects, int nbJudgments, int nbVoters, int nbBallots) {
 		super();
 		
 		this.lovely                  = lovely;
@@ -44,15 +43,13 @@ public class ProjectJudgment {
 		this.nbProjects              = nbProjects;
 		this.nbJudgments             = nbJudgments;
 		this.nbVoters                = nbVoters;
+		this.nbBallots                = nbBallots;
 		
-		this.judgmentsAsNumbers      = new Integer[nbJudgments];
 		this.judgmentsAsNumbersWith0 = new Integer[nbJudgments];
 		for (int i = 0; i < nbJudgments; i++) {
-			judgmentsAsNumbers[i]      = 0;
 			judgmentsAsNumbersWith0[i] = 0;
 		}
 
-		update( 0 );
 	}
 
 	// *********************************************************************************************
@@ -61,48 +58,57 @@ public class ProjectJudgment {
 	// *********************************************************************************************
 	
 	public void addJudgment( int value ) {
+		judgmentsAsNumbersWith0[value]++;
+	}
+	
+	// *********************************************************************************************
+	// * ABSTENTION ABSTENTION ABSTENTION ABSTENTION ABSTENTION ABSTENTION ABSTENTION ABSTENTION A *
+	// * ABSTENTION ABSTENTION ABSTENTION ABSTENTION ABSTENTION ABSTENTION ABSTENTION ABSTENTION A *
+	// *********************************************************************************************
+
+	// Each abstention is set as a "0" judgment
+	public void addAbstention( int nbVoters ) {
+		int totalEffectiveJudgments = Arrays.asList(judgmentsAsNumbersWith0).stream().reduce(0, Integer::sum);
+		judgmentsAsNumbersWith0[0] = judgmentsAsNumbersWith0[0] + ( nbVoters - totalEffectiveJudgments );
+	}
 		
-		// Add judgment
-		judgmentsAsNumbers[value]++;
-
-		// Add abstention judgments (with 0 value)
-		for (int i = 0; i < nbJudgments; i++) {
-			judgmentsAsNumbersWith0[i] = judgmentsAsNumbers[i];
-		}
-		int totalJudgments = Arrays.asList(judgmentsAsNumbers).stream().reduce(0, Integer::sum);
-		judgmentsAsNumbersWith0[0] = judgmentsAsNumbersWith0[0] + ( nbVoters - totalJudgments );		
-
-//		update();
-	}
-	
 	// *********************************************************************************************
 	// * CALCULATE CALCULATE CALCULATE CALCULATE CALCULATE CALCULATE CALCULATE CALCULATE CALCULATE *
 	// * CALCULATE CALCULATE CALCULATE CALCULATE CALCULATE CALCULATE CALCULATE CALCULATE CALCULATE *
 	// *********************************************************************************************
-	
-	public void update( int nbDeletedO ) {
+
+	// Recalculate every counters
+	public void update( int howMany0ToArase ) {
 		System.out.print ("Updating " + this.name + "... ");
-		calculatePercents( nbDeletedO );
-		calculateMedianPointJudgment();
-		calculateMajoritoryRanking();
-		System.out.println ("done.");
+		
+		System.out.print ("a2 "); arase0Judgments              ( howMany0ToArase );
+		System.out.print ("c1 "); calculateJudgmentsAsPercents ( howMany0ToArase );
+		System.out.print ("c2 "); calculateMedianPointJudgment ( );
+		System.out.print ("c3 "); calculateMajoritoryRanking   ( );
+		
+		System.out.println ("...done.");
 	}
 	
-	private void calculatePercents( int nbDeletedO ) {
-
-		// Without abstention
-		totalRealJudgments = Arrays.asList(judgmentsAsNumbers).stream().reduce(0, Integer::sum);
-		judgmentsAsPercents = new Double[ nbJudgments ];
-		for (int i = 0; i < nbJudgments; i++) {
-			judgmentsAsPercents[i] = (judgmentsAsNumbers[i] + 0.0) / totalRealJudgments;
+	// Arase "0" judgments
+	private void arase0Judgments( int howMany0ToArase ) {
+		if ( howMany0ToArase > 0 )
+		{
+			this.judgmentsAsNumbersWith0[0] = this.judgmentsAsNumbersWith0[0] - howMany0ToArase;
 		}
+	}
+	
+	// Calculate judgments by percents
+	private void calculateJudgmentsAsPercents( int howMany0ToArase ) {
+		
+		totalRealJudgments = Arrays.asList(judgmentsAsNumbersWith0).stream().reduce(0, Integer::sum);
+		
+		judgmentsAsPercentsWith0 = new Double[ nbJudgments ];
 		
 		// With abstention
 		judgmentsAsPercentsWith0 = new Double[ nbJudgments ];
 		for (int i = 0; i < nbJudgments; i++) {
-			judgmentsAsPercentsWith0[i] = (judgmentsAsNumbersWith0[i] + 0.0) / (nbVoters - nbDeletedO);
+			judgmentsAsPercentsWith0[i] = (judgmentsAsNumbersWith0[i] + 0.0) / (nbVoters - howMany0ToArase);
 		}
-
 	}
 	
 	/**
@@ -163,18 +169,41 @@ public class ProjectJudgment {
 		// Sort judgments
 		Collections.sort( tempIndividualJudgmentsWith0 );
 
+		StringBuilder sb = new StringBuilder();
+		int index;
 
-		// Calculate final majority value
-		while ( tempIndividualJudgmentsWith0.size() > 0 ) {
-			int index;
-			if ( tempIndividualJudgmentsWith0.size() % 2 == 0 ) { 
-				index = (int) ((tempIndividualJudgmentsWith0.size() - 1) / 2 );
-			} else {
-				index = (int) ((tempIndividualJudgmentsWith0.size() - 0) / 2 );
-			}
-			majorityValue = majorityValue + tempIndividualJudgmentsWith0.get( index ) + "";
-			tempIndividualJudgmentsWith0.remove(index);
+		// Calculate final majority value - METHOD 1
+		int addToIndex; 
+		if ( tempIndividualJudgmentsWith0.size() % 2 == 0 ) { 
+			index = (int) ((tempIndividualJudgmentsWith0.size() - 1) / 2 );
+			addToIndex = 1;
+		} else {
+			index = (int) ((tempIndividualJudgmentsWith0.size() - 0) / 2 );
+			addToIndex = -1;
 		}
+		while ( index >= 0 && index <= tempIndividualJudgmentsWith0.size() ) {
+			sb.append( tempIndividualJudgmentsWith0.get( index ) );
+			index = index + addToIndex;
+			if ( addToIndex >= 0 )
+				addToIndex = -addToIndex - 1;
+			else
+				addToIndex = -addToIndex + 1;
+		}
+
+//		// Calculate final majority value - METHOD 2
+//		while ( tempIndividualJudgmentsWith0.size() > 0 ) {
+//			if ( tempIndividualJudgmentsWith0.size() % 2 == 0 ) { 
+//				index = (int) ((tempIndividualJudgmentsWith0.size() - 1) / 2 );
+//			} else {
+//				index = (int) ((tempIndividualJudgmentsWith0.size() - 0) / 2 );
+//			}
+//			sb.append( tempIndividualJudgmentsWith0.get( index ) );
+//			tempIndividualJudgmentsWith0.remove(index);
+//		}
+//		System.out.println (sb.toString());
+
+		majorityValue = sb.toString();
+
 	}
 	
 	// *********************************************************************************************
@@ -183,7 +212,7 @@ public class ProjectJudgment {
 	// *********************************************************************************************
 	
 	public String toString() {
-		return name + " : " + Arrays.asList(judgmentsAsPercents) + " = " + Arrays.asList(judgmentsAsNumbers);
+		return name + " : " + Arrays.asList(judgmentsAsPercentsWith0) + " = " + Arrays.asList(judgmentsAsNumbersWith0);
 	}
 	
 }

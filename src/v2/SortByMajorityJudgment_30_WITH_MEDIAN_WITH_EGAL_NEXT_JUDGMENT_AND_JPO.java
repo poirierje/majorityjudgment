@@ -1,7 +1,8 @@
+package v2;
 import java.util.Comparator;
 import java.util.Random;
 
-public class SortByMajorityJudgment_FROM_BD_WITH_EGALITY_HANDLE implements Comparator<ProjectJudgment> {
+public class SortByMajorityJudgment_30_WITH_MEDIAN_WITH_EGAL_NEXT_JUDGMENT_AND_JPO implements Comparator<ProjectJudgment> {
 
 	static final Random RND = new Random( System.currentTimeMillis() );
 
