@@ -1,28 +1,25 @@
 package v2;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class MajorityJudgment {
 
 	// --------------------------------------------------------------------------------------------------------------------------
 		
-	static final String   SIMUL               = "JudgmentSimulator_Random";      
-//	static final String   SIMUL               = "JudgmentSimulator_WithCentroid";      
+//	static final String   SIMUL               = "JudgmentSimulator_Random";      
+	static final String   SIMUL               = "JudgmentSimulator_WithCentroid";      
 
-//	static final String   ALGO                = "SortByMajorityJudgment_10_WITH_MEDIAN_WITHOUT_EGAL";      
-//	static final String   ALGO                = "SortByMajorityJudgment_20_WITH_MEDIAN_WITH_EGAL_NEXT_JUDGMENT";      
-//	static final String   ALGO                = "SortByMajorityJudgment_30_WITH_MEDIAN_WITH_EGAL_NEXT_JUDGMENT_AND_JPO";      
-	static final String   ALGO                = "SortByMajorityJudgment_40_WITH_MEDIAN_WITH_EGAL_VALEUR_MAJORITAIRE";      
-
-	static final boolean  ARASE               = false;
-//	static final boolean  ARASE               = true;
+//	static final boolean  ARASE               = false;
+	static final boolean  ARASE               = true;
 	
-	static final int      NB_PROJECTS         =    50;
-	static final int      NB_VOTERS           =   100;
-	static final int      NB_JUDGMENTS        =    7; // nb of values for judging
-	static final int      NB_BALLOTS_BY_VOTER =    9; // nb of ballots deposed by each voter (1 ballot = 1 project judgment) 
+	static final int      NB_PROJECTS         =                                 100;
+	static final int      NB_VOTERS           =                   NB_PROJECTS * 300;
+	static final int      NB_JUDGMENTS        =                                   7; // nb of values for judging
+	static final int      NB_BALLOTS_BY_VOTER = (int) Math.ceil( NB_PROJECTS * 0.1); // nb of ballots deposed by each voter (1 ballot = 1 project judgment) 
 
 	// --------------------------------------------------------------------------------------------------------------------------
 	
@@ -30,7 +27,7 @@ public class MajorityJudgment {
 
 	// VARIABLES
 	
-	List<ProjectJudgment> projectJudgments = new ArrayList<ProjectJudgment>();
+	private List<ProjectJudgment> projectJudgments  = new ArrayList<ProjectJudgment>();
 	
 	// *********************************************************************************************
 	// * MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN MAIN *
@@ -53,17 +50,20 @@ public class MajorityJudgment {
 
 	private void run() throws Exception
 	{
-		// Create projects
+		
+		// Create and duplicate projects
+		System.out.println("Create and duplicate projects...");
 		for (int i = 0; i < NB_PROJECTS; i++) {
 			projectJudgments.add( new ProjectJudgment( i, RND.nextDouble(), NB_PROJECTS, NB_JUDGMENTS, NB_VOTERS, NB_BALLOTS_BY_VOTER ));
 		}
 		
 		// ----------------------------------------------------------------------------------------------------- Simulate projectJudgments
+		System.out.println("Simulate projectJudgments...");
 		IJudgmentSimulator simulator = ( IJudgmentSimulator ) Class.forName( "v2." + SIMUL ).newInstance();
-
 		simulator.simulate( projectJudgments, NB_JUDGMENTS, NB_VOTERS, NB_BALLOTS_BY_VOTER );
 
-		// ----------------------------------------------------------------------------------------------------- Arasing and updating projects
+		// ----------------------------------------------------------------------------------------------------- Arase and update projects
+		System.out.println("Arase and update projects...");
 
 		// Adding abstention
 		for (ProjectJudgment project : projectJudgments) {
@@ -87,20 +87,29 @@ public class MajorityJudgment {
 		}
 
 		// ----------------------------------------------------------------------------------------------------- Sort projects 
+		System.out.println("Sort projects...");
 		
-		Comparator<ProjectJudgment> algo = ( Comparator<ProjectJudgment> ) Class.forName( "v2." + ALGO ).newInstance();
+		Map< Class, List<ProjectJudgment> > allProjectJudgments = new LinkedHashMap< Class, List<ProjectJudgment> > ();
 		
-		System.out.println ("Algorithm = " + algo.getClass().getName() );
-		
-		projectJudgments.sort( algo );
+		allProjectJudgments.put( SortByMajorityJudgment_10_WITH_MEDIAN_WITHOUT_EGAL.class                   , new ArrayList<ProjectJudgment>( projectJudgments ) );
+		allProjectJudgments.put( SortByMajorityJudgment_20_WITH_MEDIAN_WITH_EGAL_NEXT_JUDGMENT.class        , new ArrayList<ProjectJudgment>( projectJudgments ) );
+//		allProjectJudgments.put( SortByMajorityJudgment_30_WITH_MEDIAN_WITH_EGAL_NEXT_JUDGMENT_AND_JPO.class, new ArrayList<ProjectJudgment>( projectJudgments ) );
+		allProjectJudgments.put( SortByMajorityJudgment_40_WITH_MEDIAN_WITH_EGAL_VALEUR_MAJORITAIRE.class   , new ArrayList<ProjectJudgment>( projectJudgments ) );
+
+		for ( Class algoClass : allProjectJudgments.keySet() ) {
+			Comparator<ProjectJudgment> algoInstance = ( Comparator<ProjectJudgment> ) algoClass.newInstance();
+			allProjectJudgments.get( algoClass ).sort( algoInstance );
+		}
 		
 		// ----------------------------------------------------------------------------------------------------- Generate OUTPUTS
+		System.out.println("Generate OUTPUTS...");
 		
 		System.out.println( "FINAL RANKING :\n" + this.toString() );
 		
 		HtmlWriter htmlWriter = new HtmlWriter( NB_JUDGMENTS );
-		htmlWriter.toHtmlFile( projectJudgments );
+		htmlWriter.toHtmlFile( allProjectJudgments );
         
+		System.out.println("... DONE !");
 	}
 
 	// *********************************************************************************************

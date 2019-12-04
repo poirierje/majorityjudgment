@@ -38,7 +38,7 @@ public class ProjectJudgment {
 		this.lovely                  = lovely;
 
 		this.num                     = num;
-		this.name                    = "Project_" + String.format("%0" + ((int) Math.log10(nbProjects) + 1) + "d", num);
+		this.name                    = "P_" + String.format("%0" + ((int) Math.log10(nbProjects) + 1) + "d", num);
 		
 		this.nbProjects              = nbProjects;
 		this.nbJudgments             = nbJudgments;
